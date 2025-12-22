@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Growtopia Complete Calculator</title>
+<style>
+:root{
+  --bg:#0d1117;
+  --panel:#161b22;
+  --box:#1c2128;
+  --text:#e6edf3;
+  --border:#30363d;
+  --btn-bg:#238636;
+  --btn-color:#fff;
+  --btn-hover:#2ea043;
+  --btn-active:#196f2d;
+}
+.light{
+  --bg:#f6f8fa;
+  --panel:#ffffff;
+  --box:#f0f2f5;
+  --text:#1f2328;
+  --border:#d0d7de;
+  --btn-bg:#238636;
+  --btn-color:#fff;
+  --btn-hover:#2ea043;
+  --btn-active:#196f2d;
+}
+body{
+  font-family:Segoe UI,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  margin:0;
+  padding:15px;
+}
+.container{
+  background:var(--panel);
+  padding:20px;
+  border-radius:12px;
+  max-width:1000px;
+  margin:auto;
+}
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.title{color:#58a6ff}
+.toggle{
+  background:var(--btn-bg);
+  color:var(--btn-color);
+  border:0;
+  padding:8px 12px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.content{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:15px;
+  margin-top:15px;
+}
+.box{
+  background:var(--box);
+  padding:18px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+h2{
+  font-size:14px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+  padding-bottom:8px;
+}
+label{font-size:13px}
+input[type="number"], input[type="text"]{
+  width:100%;
+  box-sizing: border-box;
+  font-size:18px;
+  padding:10px;
+  margin:6px 0 12px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--text);
+}
+button{
+  padding:15px;
+  border-radius:6px;
+  border:0;
+  cursor:pointer;
+  font-size:18px;
+  transition:0.1s;
+}
+button:hover{background:var(--btn-hover);}
+button:active{background:var(--btn-active);}
+.btn-green{background:var(--btn-bg);color:var(--btn-color)}
+.btn-gray{background:#30363d;color:#fff}
+.btn-red{background:#da3633;color:#fff}
+.btn-row{display:flex;gap:8px; flex-wrap:wrap;margin-top:5px;}
+.result{
+  background:var(--bg);
+  padding:10px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  font-size:14px;
+  min-height:50px;
+}
+.history{
+  max-height:180px;
+  overflow-y:auto;
+  font-size:13px;
+}
+.history div{
+  padding:6px;
+  border-bottom:1px solid var(--border);
+}
+/* Calculator Grid */
+.calc-grid{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:5px;
+}
+.calc-grid button{
+  background:#30363d;
+  color:#fff;
+  font-size:20px;
+}
+.calc-display{
+  width:100%;
+  box-sizing: border-box;
+  padding:12px 10px;
+  font-size:22px;
+  text-align:right;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--text);
+  margin-bottom:10px;
+}
+.calc-result{
+  margin-top:10px;
+  font-size:16px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  padding:10px;
+  border-radius:6px;
+  min-height:50px;
+  word-wrap:break-word;
+}
+@media (max-width:600px){
+  .calc-grid button{font-size:18px; padding:12px;}
+  .calc-display{font-size:20px; padding:12px;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+<h1 class="title">Growtopia Calculator</h1>
+<button id="themeToggle" class="toggle">🌙 / ☀️</button>
+</div>
+
+<div class="content">
+
+<!-- ROI -->
+<div class="box">
+<h2>ROI Calculator</h2>
+<label>Quantity</label>
+<input id="quantity" type="text">
+<label>Buy rate (items/WL)</label>
+<input id="buyRate" type="text">
+<label>Sell rate (items/WL)</label>
+<input id="sellRate" type="text">
+<div class="btn-row">
+<button id="calcBtnROI" class="btn-green">Calculate</button>
+<button id="clearRoi" class="btn-gray">Clear</button>
+</div>
+<div class="result" id="resultROI">Result will appear here.</div>
+</div>
+
+<!-- LIVE CONVERTER -->
+<div class="box">
+<h2>Live WL ⇄ DL ⇄ BGL</h2>
+<label>World Locks (WL)</label><input id="wlInput" type="text" placeholder="0">
+<label>Diamond Locks (DL)</label><input id="dlInput" type="text" placeholder="0">
+<label>Blue Gem Locks (BGL)</label><input id="bglInput" type="text" placeholder="0">
+<div class="btn-row">
+  <button id="clearLive" class="btn-gray">Clear</button>
+</div>
+</div>
+
+<!-- SCIENTIFIC CALCULATOR -->
+<div class="box">
+<h2>Calculator → WL/DL/BGL</h2>
+<input id="calcDisplay" class="calc-display" type="text" readonly placeholder="0">
+<div class="calc-grid">
+  <button onclick="press('7')">7</button>
+  <button onclick="press('8')">8</button>
+  <button onclick="press('9')">9</button>
+  <button onclick="press('/')">÷</button>
+
+  <button onclick="press('4')">4</button>
+  <button onclick="press('5')">5</button>
+  <button onclick="press('6')">6</button>
+  <button onclick="press('*')">×</button>
+
+  <button onclick="press('1')">1</button>
+  <button onclick="press('2')">2</button>
+  <button onclick="press('3')">3</button>
+  <button onclick="press('-')">−</button>
+
+  <button onclick="press('0')">0</button>
+  <button onclick="press('.')">.</button>
+  <button onclick="calculate()">=</button>
+  <button onclick="press('+')">+</button>
+
+  <button onclick="clearCalc()" style="grid-column:span 4; background:#da3633; color:#fff;">Clear</button>
+</div>
+<div class="calc-result" id="calcWLResult">WL / DL / BGL will appear here</div>
+<button id="copyCalcResult" class="btn-green" style="margin-top:10px;">Copy Result</button>
+</div>
+
+<!-- PROFIT HISTORY -->
+<div class="box">
+<h2>Profit History</h2>
+<div class="history" id="history"></div>
+</div>
+
+</div>
+
+<button id="resetAll" class="btn-red">Reset All</button>
+</div>
+
+<script>
+const WL_PER_DL = 100;
+const WL_PER_BGL = 10000;
+
+/* THEME */
+const toggle=document.getElementById("themeToggle");
+const savedTheme=localStorage.getItem("theme");
+if(savedTheme==="light")document.body.classList.add("light");
+toggle.onclick=()=>{
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme",document.body.classList.contains("light")?"light":"dark");
+};
+
+/* ROI + HISTORY */
+function saveHistory(entry){
+  const data=JSON.parse(localStorage.getItem("history")||"[]");
+  data.unshift(entry);
+  localStorage.setItem("history",JSON.stringify(data));
+  renderHistory();
+}
+function renderHistory(){
+  const h=document.getElementById("history");
+  const data=JSON.parse(localStorage.getItem("history")||"[]");
+  h.innerHTML=data.map(e=>`
+  <div>
+  ${e.time}<br>
+  ${e.type}: ${Math.floor(e.wl).toLocaleString()} WL<br>
+  💎${e.bgl.toLocaleString()} 🔷${e.dl.toLocaleString()} 🔒${e.rem.toLocaleString()}
+  </div>`).join("");
+}
+
+const calcBtnROI = document.getElementById("calcBtnROI");
+const clearRoi = document.getElementById("clearRoi");
+const quantity = document.getElementById("quantity");
+const buyRate = document.getElementById("buyRate");
+const sellRate = document.getElementById("sellRate");
+const resultROI = document.getElementById("resultROI");
+
+function parseInput(input){ return parseFloat(input.replace(/,/g,''))||0; }
+
+// ROI calculation
+calcBtnROI.onclick=()=>{
+  const q=parseInput(quantity.value);
+  const b=parseInput(buyRate.value);
+  const s=parseInput(sellRate.value);
+  if(!q||!b||!s)return;
+  const profit=(q/s)-(q/b);
+  let wl=Math.floor(Math.abs(profit));
+  let bgl=Math.floor(wl/WL_PER_BGL); wl%=WL_PER_BGL;
+  let dl=Math.floor(wl/WL_PER_DL); let rem=wl%WL_PER_DL;
+
+  resultROI.innerHTML=`${profit>=0?"Profit":"Loss"}: ${profit.toLocaleString()} WL<br>
+  💎 ${bgl.toLocaleString()} BGL | 🔷 ${dl.toLocaleString()} DL | 🔒 ${rem.toLocaleString()} WL`;
+
+  saveHistory({
+    time:new Date().toLocaleString(),
+    type:profit>=0?"Profit":"Loss",
+    wl:profit,
+    bgl,dl,rem
+  });
+};
+
+// Clear ROI
+clearRoi.onclick=()=>{quantity.value=buyRate.value=sellRate.value="";resultROI.textContent="Result will appear here.";};
+
+// Format ROI inputs with commas
+function formatROIInput(input){
+  let val = input.value.replace(/,/g,'');
+  if(val==='') return;
+  input.value = Number(val).toLocaleString();
+}
+quantity.addEventListener('input', ()=>formatROIInput(quantity));
+buyRate.addEventListener('input', ()=>formatROIInput(buyRate));
+sellRate.addEventListener('input', ()=>formatROIInput(sellRate));
+
+/* LIVE CONVERTER */
+const wlInput=document.getElementById("wlInput");
+const dlInput=document.getElementById("dlInput");
+const bglInput=document.getElementById("bglInput");
+
+function formatNumber(n){ return Number(n).toLocaleString(); }
+function parseNumber(s){ return parseFloat(s.replace(/,/g,''))||0; }
+
+function updateFromWL(){ 
+  const wl=parseNumber(wlInput.value);
+  dlInput.value=formatNumber(wl/WL_PER_DL);
+  bglInput.value=formatNumber(wl/WL_PER_BGL);
+  wlInput.value = formatNumber(wl);
+}
+function updateFromDL(){ 
+  const dl=parseNumber(dlInput.value);
+  const wl = dl*WL_PER_DL;
+  wlInput.value = formatNumber(wl);
+  bglInput.value = formatNumber(wl/WL_PER_BGL);
+}
+function updateFromBGL(){ 
+  const bgl=parseNumber(bglInput.value);
+  const wl = bgl*WL_PER_BGL;
+  wlInput.value = formatNumber(wl);
+  dlInput.value = formatNumber(wl/WL_PER_DL);
+}
+
+wlInput.addEventListener("input", updateFromWL);
+dlInput.addEventListener("input", updateFromDL);
+bglInput.addEventListener("input", updateFromBGL);
+
+// Clear Live converter
+const clearLive = document.getElementById('clearLive');
+clearLive.addEventListener('click', () => {
+    wlInput.value = '';
+    dlInput.value = '';
+    bglInput.value = '';
+});
+
+/* SCIENTIFIC CALCULATOR */
+let expression = '';
+const display = document.getElementById("calcDisplay");
+const calcWLResult = document.getElementById("calcWLResult");
+
+function formatDisplay(expr){
+  const parts = expr.split(/([+\-*/])/g);
+  return parts.map(p=>{
+    if(/[0-9.]/.test(p)) return Number(p.replace(/,/g,'')).toLocaleString();
+    else return p;
+  }).join('');
+}
+
+function press(val){
+  expression += val;
+  display.value = formatDisplay(expression);
+}
+
+function clearCalc(){ 
+  expression = '';
+  display.value = '';
+  calcWLResult.textContent = 'WL / DL / BGL will appear here';
+}
+
+function calculate(){
+  let result;
+  try { 
+    result = Function('"use strict";return ('+expression.replace(/,/g,'')+')')(); 
+  } catch { 
+    calcWLResult.textContent = 'Invalid expression'; 
+    return; 
+  }
+  if(isNaN(result)){ calcWLResult.textContent = 'Invalid calculation'; return; }
+
+  let wlTotal = result;
+  let bgl = Math.floor(wlTotal / WL_PER_BGL);
+  let remWL = wlTotal % WL_PER_BGL;
+  let dl = Math.floor(remWL / WL_PER_DL);
+  let rem = remWL % WL_PER_DL;
+
+  calcWLResult.innerHTML = `Result: ${wlTotal.toLocaleString()} WL<br>
+  💎 ${bgl.toLocaleString()} BGL | 🔷 ${dl.toLocaleString()} DL | 🔒 ${rem.toLocaleString()} WL`;
+
+  expression = result.toString();
+  display.value = Number(expression).toLocaleString();
+}
+
+/* KEYBOARD SUPPORT - ONLY WHEN SCIENTIFIC CALC INPUT IS FOCUSED */
+display.addEventListener('keydown', function(e){
+  const allowedKeys = '0123456789.+-*/';
+  if(allowedKeys.includes(e.key)){
+    press(e.key);
+    e.preventDefault();
+  } else if(e.key === 'Enter'){
+    calculate();
+    e.preventDefault();
+  } else if(e.key === 'Backspace'){
+    expression = expression.slice(0,-1);
+    display.value = formatDisplay(expression);
+    e.preventDefault();
+  } else if(e.key.toLowerCase() === 'c'){ 
+    clearCalc();
+    e.preventDefault();
+  }
+});
+
+/* COPY TO CLIPBOARD */
+const copyBtn = document.getElementById("copyCalcResult");
+copyBtn.onclick = () => {
+  const text = calcWLResult.textContent;
+  if(text && text !== 'WL / DL / BGL will appear here'){
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Calculator result copied to clipboard!");
+    }).catch(err => {
+      alert("Failed to copy: " + err);
+    });
+  } else {
+    alert("Nothing to copy!");
+  }
+};
+
+/* RESET ALL */
+document.getElementById("resetAll").onclick=()=>{
+  localStorage.clear();
+  location.reload();
+};
+
+renderHistory();
+</script>
+</body>
+</html>
