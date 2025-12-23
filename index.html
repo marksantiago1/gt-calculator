@@ -76,7 +76,7 @@ h2{
 label{font-size:13px}
 input[type="number"], input[type="text"]{
   width:100%;
-  box-sizing: border-box;
+  box-sizing:border-box;
   font-size:18px;
   padding:10px;
   margin:6px 0 12px;
@@ -95,6 +95,7 @@ button{
 }
 button:hover{background:var(--btn-hover);}
 button:active{background:var(--btn-active);}
+button:disabled{opacity:.4;cursor:not-allowed;}
 .btn-green{background:var(--btn-bg);color:var(--btn-color)}
 .btn-gray{background:#30363d;color:#fff}
 .btn-red{background:#da3633;color:#fff}
@@ -150,8 +151,9 @@ button:active{background:var(--btn-active);}
   word-wrap:break-word;
 }
 @media (max-width:600px){
-  .calc-grid button{font-size:18px; padding:12px;}
-  .calc-display{font-size:20px; padding:12px;}
+  .calc-grid button{font-size:16px; padding:10px;}
+  .calc-display{font-size:20px; padding:10px;}
+  .calc-grid{grid-template-columns:repeat(2,1fr);}
 }
 </style>
 </head>
@@ -169,11 +171,11 @@ button:active{background:var(--btn-active);}
 <div class="box">
 <h2>ROI Calculator</h2>
 <label>Quantity</label>
-<input id="quantity" type="text">
+<input id="quantity" type="text" inputmode="decimal" pattern="[0-9]*">
 <label>Buy rate (items/WL)</label>
-<input id="buyRate" type="text">
+<input id="buyRate" type="text" inputmode="decimal" pattern="[0-9]*">
 <label>Sell rate (items/WL)</label>
-<input id="sellRate" type="text">
+<input id="sellRate" type="text" inputmode="decimal" pattern="[0-9]*">
 <div class="btn-row">
 <button id="calcBtnROI" class="btn-green">Calculate</button>
 <button id="clearRoi" class="btn-gray">Clear</button>
@@ -184,9 +186,9 @@ button:active{background:var(--btn-active);}
 <!-- LIVE CONVERTER -->
 <div class="box">
 <h2>Live WL ⇄ DL ⇄ BGL</h2>
-<label>World Locks (WL)</label><input id="wlInput" type="text" placeholder="0">
-<label>Diamond Locks (DL)</label><input id="dlInput" type="text" placeholder="0">
-<label>Blue Gem Locks (BGL)</label><input id="bglInput" type="text" placeholder="0">
+<label>World Locks (WL)</label><input id="wlInput" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="0">
+<label>Diamond Locks (DL)</label><input id="dlInput" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="0">
+<label>Blue Gem Locks (BGL)</label><input id="bglInput" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="0">
 <div class="btn-row">
   <button id="clearLive" class="btn-gray">Clear</button>
 </div>
@@ -196,6 +198,7 @@ button:active{background:var(--btn-active);}
 <div class="box">
 <h2>Calculator → WL/DL/BGL</h2>
 <input id="calcDisplay" class="calc-display" type="text" readonly placeholder="0">
+
 <div class="calc-grid">
   <button onclick="press('7')">7</button>
   <button onclick="press('8')">8</button>
@@ -217,8 +220,11 @@ button:active{background:var(--btn-active);}
   <button onclick="calculate()">=</button>
   <button onclick="press('+')">+</button>
 
-  <button onclick="clearCalc()" style="grid-column:span 4; background:#da3633; color:#fff;">Clear</button>
+  <button id="backspaceBtn" onclick="backspaceCalc()" style="grid-column:span 2;">⌫</button>
+  <button onclick="clearEntry()">CE</button>
+  <button onclick="clearCalc()" style="background:#da3633;">Clear</button>
 </div>
+
 <div class="calc-result" id="calcWLResult">WL / DL / BGL will appear here</div>
 <button id="copyCalcResult" class="btn-green" style="margin-top:10px;">Copy Result</button>
 </div>
@@ -274,7 +280,6 @@ const resultROI = document.getElementById("resultROI");
 
 function parseInput(input){ return parseFloat(input.replace(/,/g,''))||0; }
 
-// ROI calculation
 calcBtnROI.onclick=()=>{
   const q=parseInput(quantity.value);
   const b=parseInput(buyRate.value);
@@ -296,51 +301,55 @@ calcBtnROI.onclick=()=>{
   });
 };
 
-// Clear ROI
 clearRoi.onclick=()=>{quantity.value=buyRate.value=sellRate.value="";resultROI.textContent="Result will appear here.";};
 
-// Format ROI inputs with commas
-function formatROIInput(input){
-  let val = input.value.replace(/,/g,'');
-  if(val==='') return;
-  input.value = Number(val).toLocaleString();
+/* Auto-format numbers with commas while preserving decimals */
+function formatWithCommas(input){
+  const selectionStart = input.selectionStart;
+  let val = input.value.replace(/[^\d.]/g,'');
+  if(!val) { input.value=''; return; }
+  const parts = val.split('.');
+  parts[0] = parseInt(parts[0]||'0',10).toLocaleString();
+  input.value = parts.join('.');
+  // Restore cursor to near original position
+  let diff = input.value.length - val.length;
+  input.selectionStart = input.selectionEnd = selectionStart + diff;
 }
-quantity.addEventListener('input', ()=>formatROIInput(quantity));
-buyRate.addEventListener('input', ()=>formatROIInput(buyRate));
-sellRate.addEventListener('input', ()=>formatROIInput(sellRate));
+
+[quantity,buyRate,sellRate,wlInput,dlInput,bglInput].forEach(input=>{
+  input.addEventListener('input', ()=>formatWithCommas(input));
+});
 
 /* LIVE CONVERTER */
 const wlInput=document.getElementById("wlInput");
 const dlInput=document.getElementById("dlInput");
 const bglInput=document.getElementById("bglInput");
 
-function formatNumber(n){ return Number(n).toLocaleString(); }
 function parseNumber(s){ return parseFloat(s.replace(/,/g,''))||0; }
 
 function updateFromWL(){ 
   const wl=parseNumber(wlInput.value);
-  dlInput.value=formatNumber(wl/WL_PER_DL);
-  bglInput.value=formatNumber(wl/WL_PER_BGL);
-  wlInput.value = formatNumber(wl);
+  dlInput.value = (wl/WL_PER_DL).toLocaleString();
+  bglInput.value = (wl/WL_PER_BGL).toLocaleString();
+  wlInput.value = wl.toLocaleString();
 }
 function updateFromDL(){ 
   const dl=parseNumber(dlInput.value);
   const wl = dl*WL_PER_DL;
-  wlInput.value = formatNumber(wl);
-  bglInput.value = formatNumber(wl/WL_PER_BGL);
+  wlInput.value = wl.toLocaleString();
+  bglInput.value = (wl/WL_PER_BGL).toLocaleString();
 }
 function updateFromBGL(){ 
   const bgl=parseNumber(bglInput.value);
   const wl = bgl*WL_PER_BGL;
-  wlInput.value = formatNumber(wl);
-  dlInput.value = formatNumber(wl/WL_PER_DL);
+  wlInput.value = wl.toLocaleString();
+  dlInput.value = (wl/WL_PER_DL).toLocaleString();
 }
 
 wlInput.addEventListener("input", updateFromWL);
 dlInput.addEventListener("input", updateFromDL);
 bglInput.addEventListener("input", updateFromBGL);
 
-// Clear Live converter
 const clearLive = document.getElementById('clearLive');
 clearLive.addEventListener('click', () => {
     wlInput.value = '';
@@ -352,6 +361,7 @@ clearLive.addEventListener('click', () => {
 let expression = '';
 const display = document.getElementById("calcDisplay");
 const calcWLResult = document.getElementById("calcWLResult");
+const backspaceBtn = document.getElementById("backspaceBtn");
 
 function formatDisplay(expr){
   const parts = expr.split(/([+\-*/])/g);
@@ -361,15 +371,35 @@ function formatDisplay(expr){
   }).join('');
 }
 
+function updateBackspace(){
+  backspaceBtn.disabled = expression.length === 0;
+}
+
 function press(val){
   expression += val;
   display.value = formatDisplay(expression);
+  updateBackspace();
+}
+
+function backspaceCalc(){
+  if(!expression) return;
+  expression = expression.slice(0,-1);
+  display.value = formatDisplay(expression);
+  updateBackspace();
+}
+
+function clearEntry(){
+  if(!expression) return;
+  expression = expression.replace(/([0-9.]+)$/,'');
+  display.value = formatDisplay(expression);
+  updateBackspace();
 }
 
 function clearCalc(){ 
   expression = '';
   display.value = '';
   calcWLResult.textContent = 'WL / DL / BGL will appear here';
+  updateBackspace();
 }
 
 function calculate(){
@@ -393,9 +423,9 @@ function calculate(){
 
   expression = result.toString();
   display.value = Number(expression).toLocaleString();
+  updateBackspace();
 }
 
-/* KEYBOARD SUPPORT - ONLY WHEN SCIENTIFIC CALC INPUT IS FOCUSED */
 display.addEventListener('keydown', function(e){
   const allowedKeys = '0123456789.+-*/';
   if(allowedKeys.includes(e.key)){
@@ -405,8 +435,7 @@ display.addEventListener('keydown', function(e){
     calculate();
     e.preventDefault();
   } else if(e.key === 'Backspace'){
-    expression = expression.slice(0,-1);
-    display.value = formatDisplay(expression);
+    backspaceCalc();
     e.preventDefault();
   } else if(e.key.toLowerCase() === 'c'){ 
     clearCalc();
@@ -436,6 +465,7 @@ document.getElementById("resetAll").onclick=()=>{
 };
 
 renderHistory();
+updateBackspace();
 </script>
 </body>
 </html>
