@@ -169,11 +169,11 @@ button:active{background:var(--btn-active);}
 <div class="box">
 <h2>ROI Calculator</h2>
 <label>Quantity</label>
-<input id="quantity" type="text">
+<input id="quantity" type="text" inputmode="decimal">
 <label>Buy rate (items/WL)</label>
-<input id="buyRate" type="text">
+<input id="buyRate" type="text" inputmode="decimal">
 <label>Sell rate (items/WL)</label>
-<input id="sellRate" type="text">
+<input id="sellRate" type="text" inputmode="decimal">
 <div class="btn-row">
 <button id="calcBtnROI" class="btn-green">Calculate</button>
 <button id="clearRoi" class="btn-gray">Clear</button>
@@ -184,9 +184,12 @@ button:active{background:var(--btn-active);}
 <!-- LIVE CONVERTER -->
 <div class="box">
 <h2>Live WL ⇄ DL ⇄ BGL</h2>
-<label>World Locks (WL)</label><input id="wlInput" type="text" placeholder="0">
-<label>Diamond Locks (DL)</label><input id="dlInput" type="text" placeholder="0">
-<label>Blue Gem Locks (BGL)</label><input id="bglInput" type="text" placeholder="0">
+<label>World Locks (WL)</label>
+<input id="wlInput" type="text" inputmode="decimal" placeholder="0">
+<label>Diamond Locks (DL)</label>
+<input id="dlInput" type="text" inputmode="decimal" placeholder="0">
+<label>Blue Gem Locks (BGL)</label>
+<input id="bglInput" type="text" inputmode="decimal" placeholder="0">
 <div class="btn-row">
   <button id="clearLive" class="btn-gray">Clear</button>
 </div>
@@ -200,24 +203,25 @@ button:active{background:var(--btn-active);}
   <button onclick="press('7')">7</button>
   <button onclick="press('8')">8</button>
   <button onclick="press('9')">9</button>
-  <button onclick="press('/')">÷</button>
+  <button onclick="backspace()">⌫</button>
 
   <button onclick="press('4')">4</button>
   <button onclick="press('5')">5</button>
   <button onclick="press('6')">6</button>
-  <button onclick="press('*')">×</button>
+  <button onclick="press('/')">÷</button>
 
   <button onclick="press('1')">1</button>
   <button onclick="press('2')">2</button>
   <button onclick="press('3')">3</button>
-  <button onclick="press('-')">−</button>
+  <button onclick="press('*')">×</button>
 
   <button onclick="press('0')">0</button>
   <button onclick="press('.')">.</button>
-  <button onclick="calculate()">=</button>
-  <button onclick="press('+')">+</button>
+  <button onclick="clearCalc()">Clear</button>
+  <button onclick="press('-')">−</button>
 
-  <button onclick="clearCalc()" style="grid-column:span 4; background:#da3633; color:#fff;">Clear</button>
+  <button onclick="calculate()" style="grid-column:span 3; background:#da3633; color:#fff;">=</button>
+  <button onclick="press('+')">+</button>
 </div>
 <div class="calc-result" id="calcWLResult">WL / DL / BGL will appear here</div>
 <button id="copyCalcResult" class="btn-green" style="margin-top:10px;">Copy Result</button>
@@ -242,10 +246,7 @@ const WL_PER_BGL = 10000;
 const toggle=document.getElementById("themeToggle");
 const savedTheme=localStorage.getItem("theme");
 if(savedTheme==="light")document.body.classList.add("light");
-toggle.onclick=()=>{
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme",document.body.classList.contains("light")?"light":"dark");
-};
+toggle.onclick=()=>{document.body.classList.toggle("light"); localStorage.setItem("theme",document.body.classList.contains("light")?"light":"dark");};
 
 /* ROI + HISTORY */
 function saveHistory(entry){
@@ -257,12 +258,7 @@ function saveHistory(entry){
 function renderHistory(){
   const h=document.getElementById("history");
   const data=JSON.parse(localStorage.getItem("history")||"[]");
-  h.innerHTML=data.map(e=>`
-  <div>
-  ${e.time}<br>
-  ${e.type}: ${Math.floor(e.wl).toLocaleString()} WL<br>
-  💎${e.bgl.toLocaleString()} 🔷${e.dl.toLocaleString()} 🔒${e.rem.toLocaleString()}
-  </div>`).join("");
+  h.innerHTML=data.map(e=>`<div>${e.time}<br>${e.type}: ${Math.floor(e.wl).toLocaleString()} WL<br>💎${e.bgl.toLocaleString()} 🔷${e.dl.toLocaleString()} 🔒${e.rem.toLocaleString()}</div>`).join("");
 }
 
 const calcBtnROI = document.getElementById("calcBtnROI");
@@ -285,21 +281,15 @@ calcBtnROI.onclick=()=>{
   let bgl=Math.floor(wl/WL_PER_BGL); wl%=WL_PER_BGL;
   let dl=Math.floor(wl/WL_PER_DL); let rem=wl%WL_PER_DL;
 
-  resultROI.innerHTML=`${profit>=0?"Profit":"Loss"}: ${profit.toLocaleString()} WL<br>
-  💎 ${bgl.toLocaleString()} BGL | 🔷 ${dl.toLocaleString()} DL | 🔒 ${rem.toLocaleString()} WL`;
+  resultROI.innerHTML=`${profit>=0?"Profit":"Loss"}: ${profit.toLocaleString()} WL<br>💎 ${bgl.toLocaleString()} BGL | 🔷 ${dl.toLocaleString()} DL | 🔒 ${rem.toLocaleString()} WL`;
 
-  saveHistory({
-    time:new Date().toLocaleString(),
-    type:profit>=0?"Profit":"Loss",
-    wl:profit,
-    bgl,dl,rem
-  });
+  saveHistory({time:new Date().toLocaleString(),type:profit>=0?"Profit":"Loss",wl:profit,bgl,dl,rem});
 };
 
 // Clear ROI
 clearRoi.onclick=()=>{quantity.value=buyRate.value=sellRate.value="";resultROI.textContent="Result will appear here.";};
 
-// Format ROI inputs with commas
+// Format ROI inputs
 function formatROIInput(input){
   let val = input.value.replace(/,/g,'');
   if(val==='') return;
@@ -314,38 +304,49 @@ const wlInput=document.getElementById("wlInput");
 const dlInput=document.getElementById("dlInput");
 const bglInput=document.getElementById("bglInput");
 
-function formatNumber(n){ return Number(n).toLocaleString(); }
 function parseNumber(s){ return parseFloat(s.replace(/,/g,''))||0; }
+function formatNumber(n){ return Number(n).toLocaleString(); }
 
-function updateFromWL(){ 
-  const wl=parseNumber(wlInput.value);
-  dlInput.value=formatNumber(wl/WL_PER_DL);
-  bglInput.value=formatNumber(wl/WL_PER_BGL);
-  wlInput.value = formatNumber(wl);
-}
-function updateFromDL(){ 
-  const dl=parseNumber(dlInput.value);
-  const wl = dl*WL_PER_DL;
-  wlInput.value = formatNumber(wl);
-  bglInput.value = formatNumber(wl/WL_PER_BGL);
-}
-function updateFromBGL(){ 
-  const bgl=parseNumber(bglInput.value);
-  const wl = bgl*WL_PER_BGL;
-  wlInput.value = formatNumber(wl);
-  dlInput.value = formatNumber(wl/WL_PER_DL);
+let liveUpdating = false;
+
+function updateLiveFromWL(){
+  if(liveUpdating) return;
+  liveUpdating = true;
+  const wl = parseNumber(wlInput.value);
+  dlInput.value = wl ? formatNumber(wl / WL_PER_DL) : '';
+  bglInput.value = wl ? formatNumber(wl / WL_PER_BGL) : '';
+  wlInput.value = wl ? formatNumber(wl) : '';
+  liveUpdating = false;
 }
 
-wlInput.addEventListener("input", updateFromWL);
-dlInput.addEventListener("input", updateFromDL);
-bglInput.addEventListener("input", updateFromBGL);
+function updateLiveFromDL(){
+  if(liveUpdating) return;
+  liveUpdating = true;
+  const dl = parseNumber(dlInput.value);
+  const wl = dl * WL_PER_DL;
+  wlInput.value = dl ? formatNumber(wl) : '';
+  bglInput.value = dl ? formatNumber(wl / WL_PER_BGL) : '';
+  liveUpdating = false;
+}
 
-// Clear Live converter
-const clearLive = document.getElementById('clearLive');
-clearLive.addEventListener('click', () => {
-    wlInput.value = '';
-    dlInput.value = '';
-    bglInput.value = '';
+function updateLiveFromBGL(){
+  if(liveUpdating) return;
+  liveUpdating = true;
+  const bgl = parseNumber(bglInput.value);
+  const wl = bgl * WL_PER_BGL;
+  wlInput.value = bgl ? formatNumber(wl) : '';
+  dlInput.value = bgl ? formatNumber(wl / WL_PER_DL) : '';
+  liveUpdating = false;
+}
+
+wlInput.addEventListener("input", updateLiveFromWL);
+dlInput.addEventListener("input", updateLiveFromDL);
+bglInput.addEventListener("input", updateLiveFromBGL);
+
+document.getElementById('clearLive').addEventListener('click', () => {
+  wlInput.value = '';
+  dlInput.value = '';
+  bglInput.value = '';
 });
 
 /* SCIENTIFIC CALCULATOR */
@@ -355,31 +356,17 @@ const calcWLResult = document.getElementById("calcWLResult");
 
 function formatDisplay(expr){
   const parts = expr.split(/([+\-*/])/g);
-  return parts.map(p=>{
-    if(/[0-9.]/.test(p)) return Number(p.replace(/,/g,'')).toLocaleString();
-    else return p;
-  }).join('');
+  return parts.map(p=>{ if(/[0-9.]/.test(p)) return Number(p.replace(/,/g,'')).toLocaleString(); else return p; }).join('');
 }
 
-function press(val){
-  expression += val;
-  display.value = formatDisplay(expression);
-}
-
-function clearCalc(){ 
-  expression = '';
-  display.value = '';
-  calcWLResult.textContent = 'WL / DL / BGL will appear here';
-}
+function press(val){ expression += val; display.value = formatDisplay(expression); }
+function clearCalc(){ expression = ''; display.value = ''; calcWLResult.textContent = 'WL / DL / BGL will appear here'; }
+function backspace(){ expression = expression.slice(0,-1); display.value = formatDisplay(expression); }
 
 function calculate(){
   let result;
-  try { 
-    result = Function('"use strict";return ('+expression.replace(/,/g,'')+')')(); 
-  } catch { 
-    calcWLResult.textContent = 'Invalid expression'; 
-    return; 
-  }
+  try { result = Function('"use strict";return ('+expression.replace(/,/g,'')+')')(); } 
+  catch { calcWLResult.textContent = 'Invalid expression'; return; }
   if(isNaN(result)){ calcWLResult.textContent = 'Invalid calculation'; return; }
 
   let wlTotal = result;
@@ -388,52 +375,30 @@ function calculate(){
   let dl = Math.floor(remWL / WL_PER_DL);
   let rem = remWL % WL_PER_DL;
 
-  calcWLResult.innerHTML = `Result: ${wlTotal.toLocaleString()} WL<br>
-  💎 ${bgl.toLocaleString()} BGL | 🔷 ${dl.toLocaleString()} DL | 🔒 ${rem.toLocaleString()} WL`;
+  calcWLResult.innerHTML = `Result: ${wlTotal.toLocaleString()} WL<br>💎 ${bgl.toLocaleString()} BGL | 🔷 ${dl.toLocaleString()} DL | 🔒 ${rem.toLocaleString()} WL`;
 
   expression = result.toString();
   display.value = Number(expression).toLocaleString();
 }
 
-/* KEYBOARD SUPPORT - ONLY WHEN SCIENTIFIC CALC INPUT IS FOCUSED */
+/* KEYBOARD SUPPORT */
 display.addEventListener('keydown', function(e){
   const allowedKeys = '0123456789.+-*/';
-  if(allowedKeys.includes(e.key)){
-    press(e.key);
-    e.preventDefault();
-  } else if(e.key === 'Enter'){
-    calculate();
-    e.preventDefault();
-  } else if(e.key === 'Backspace'){
-    expression = expression.slice(0,-1);
-    display.value = formatDisplay(expression);
-    e.preventDefault();
-  } else if(e.key.toLowerCase() === 'c'){ 
-    clearCalc();
-    e.preventDefault();
-  }
+  if(allowedKeys.includes(e.key)){ press(e.key); e.preventDefault(); }
+  else if(e.key === 'Enter'){ calculate(); e.preventDefault(); }
+  else if(e.key === 'Backspace'){ backspace(); e.preventDefault(); }
+  else if(e.key.toLowerCase() === 'c'){ clearCalc(); e.preventDefault(); }
 });
 
 /* COPY TO CLIPBOARD */
-const copyBtn = document.getElementById("copyCalcResult");
-copyBtn.onclick = () => {
+document.getElementById("copyCalcResult").onclick = () => {
   const text = calcWLResult.textContent;
-  if(text && text !== 'WL / DL / BGL will appear here'){
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Calculator result copied to clipboard!");
-    }).catch(err => {
-      alert("Failed to copy: " + err);
-    });
-  } else {
-    alert("Nothing to copy!");
-  }
+  if(text && text !== 'WL / DL / BGL will appear here'){ navigator.clipboard.writeText(text).then(()=>alert("Calculator result copied!")).catch(err=>alert("Failed to copy: "+err)); }
+  else{ alert("Nothing to copy!"); }
 };
 
 /* RESET ALL */
-document.getElementById("resetAll").onclick=()=>{
-  localStorage.clear();
-  location.reload();
-};
+document.getElementById("resetAll").onclick=()=>{ localStorage.clear(); location.reload(); };
 
 renderHistory();
 </script>
